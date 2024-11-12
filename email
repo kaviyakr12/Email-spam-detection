@@ -1,0 +1,141 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, roc_auc_score
+import nltk
+from nltk.corpus import stopwords
+from collections import Counter
+
+# Libraries for visualisation
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# Load the datasetimport pandas as pd
+df = pd.read_csv("spam.csv",encoding='latin-1')
+
+# Display the first few rows of the dataset
+df.head() 
+
+# Drop unnecessary columns from the DataFrame
+
+columns_to_drop = ["Unnamed: 2", "Unnamed: 3", "Unnamed: 4"]
+df.drop(columns=columns_to_drop, inplace=True)
+
+# Displaying the data
+df
+
+# Consice information of the dataset 
+df.info()
+
+df.shape
+
+df.describe()
+
+df.isnull().sum()
+
+df.columns
+
+# Rename the columns "v1 and "v2" to new names
+
+new_column_names = {"v1":"Category","v2":"Message"}
+df.rename(columns = new_column_names,inplace = True)
+
+df.head()
+
+#datavisulation
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.countplot(data=df, x='Category')
+plt.xlabel('Category')
+plt.ylabel('count')
+plt.title('Distribution of mails')
+plt.show()
+
+plt.pie(df['Category'].value_counts(),labels=['ham','spam'],autopct='%0.2f')
+plt.show()
+
+df.loc[df["Category"] == "spam", "Category"] = 0
+df.loc[df["Category"] == "ham", "Category"] = 1
+
+# Separate the feature (message) and target (category) data
+
+X = df["Message"]
+Y = df["Category"]
+
+print(Y)
+
+#Splitting the data into training data and test data
+from sklearn.model_selection import train_test_split
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, random_state = 3)
+
+# Print the shape of X
+print(X.shape)
+
+# Print the shape of X_train and X_test
+print(X_train.shape)
+print(X_test.shape)
+
+# Initialize TF-IDF Vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+feature_extraction = TfidfVectorizer(min_df=1, stop_words="english", lowercase=True)
+
+# Feature extraction for training and testing data
+X_train_features = feature_extraction.fit_transform(X_train)
+X_test_features = feature_extraction.transform(X_test)
+
+# Convert Y_train and Y_test to integer type
+Y_train = Y_train.astype("int")
+Y_test = Y_test.astype("int")
+
+print(X_train)
+
+print(X_train_features)
+
+#Model Selection And Training
+#logistic Regression
+# Create and Fit Logistic Regression Model
+from sklearn.linear_model import LogisticRegression
+model = LogisticRegression()
+model.fit(X_train_features, Y_train)
+
+#Evaluating the trained mode
+#Make predictions on the training data
+predict_train_data=model.predict(X_train_features)
+
+#Model Evaluation
+from sklearn.metrics import accuracy_score,confusion_matrix
+accuracy_train_data=accuracy_score(Y_train,predict_train_data)
+print("Accuracy on training data: ",accuracy_train_data)
+
+# Make predictions on the testing data
+predict_test_data=model.predict(X_test_features)
+
+#Model Evaluation
+accuracy_test_data=accuracy_score(Y_test,predict_test_data)
+print("acuuracy on test data: ",accuracy_test_data)
+
+#Test thee model with the email messages
+new_mail=["Congratulations on your recent achievement! Well done."]
+new_data_features=feature_extraction.transform(new_mail)
+prediction=model.predict(new_data_features)
+print(prediction)
+
+if(prediction[0]==1):
+    print("Ham Mail")
+else:
+    print("Spam Mail")
+
+    #confusion matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, roc_auc_score
+import nltk
+conf_matrix=confusion_matrix(Y_test,predict_test_data)
+plt.figure(figsize=(6,4))
+sns.heatmap(conf_matrix,annot=True,fmt="d",cmap="Oranges",cbar=False)
+plt.xlabel("Predicted value")
+plt.ylabel("Actual value")
+plt.title("Confusion Matrix")
+plt.show()
